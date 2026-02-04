@@ -1,0 +1,13 @@
+# WeChat 消息监控 PoC - Python 依赖包
+# 安装命令: pip install -r requirements.txt
+
+# Windows UI Automation 库 - 核心依赖
+# 用于遍历和操作 Windows 应用程序的 UI 元素
+uiautomation>=2.0.15
+
+# 截图+OCR 方案依赖
+Pillow>=9.0.0          # 图像处理库
+pytesseract>=0.3.10    # OCR 库（需要配合 Tesseract-OCR 引擎使用）
+
+# 其他可能用到的辅助库
+# psutil  # 用于获取进程信息（可选，未来扩展用）
