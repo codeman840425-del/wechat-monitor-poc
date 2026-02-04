@@ -1,0 +1,145 @@
+advanced:
+  deduplication:
+    enabled: true
+    similarity_threshold: 0.85
+    time_window: 60
+  performance:
+    max_messages_per_scan: 50
+    ocr_timeout: 10
+    screenshot_quality: 80
+database:
+  data_retention_days: 30
+  db_path: ./wechat_monitor.db
+  enable_vacuum: true
+keywords:
+  case_sensitive: false
+  list:
+  - 付款
+  - 发货
+  - 投诉
+  - 退款
+  - 订单
+  - 价格
+  match_mode: contain
+logging:
+  backup_count: 5
+  console_output: true
+  level: INFO
+  log_file: ./monitor.log
+  max_size_mb: 10
+monitor:
+  _capture_region_note: capture_region_offset 是相对于目标窗口左上角的偏移量
+  always_reselect_region: true
+  capture_region:
+  - 1445
+  - 174
+  - 552
+  - 354
+  force_reselect_region: false
+  interval: 5
+  screenshot:
+    retention_days: 7
+    save_directory: ./screenshots
+    save_screenshots: true
+  target_window_title: ''
+ocr:
+  chat_area:
+    bottom_crop: 0.1
+    left_crop: 0.3
+    right_crop: 0.0
+    top_crop: 0.1
+  config: --oem 3 --psm 6
+  lang: chi_sim+eng
+  preprocess:
+    contrast: false
+    contrast_factor: 1.2
+    enabled: true
+    scale: 2.0
+    sharpen: false
+  tesseract_cmd: ''
+
+# ==================== 通知配置 (Phase 3) ====================
+notification:
+  enabled: true
+  
+  # 默认通知渠道（当没有匹配规则时使用）
+  default_channels:
+    - console
+    - file
+  
+  # 通知规则
+  rules:
+    # 规则1: 投诉类消息 -> 钉钉+邮件
+    - name: "投诉告警"
+      keywords: ["投诉", "举报", "纠纷"]
+      channels: ["dingtalk", "email"]
+      priority: "CRITICAL"
+      cooldown: 300  # 5分钟内不重复通知
+      enabled: true
+      
+    # 规则2: 退款类消息 -> 企业微信
+    - name: "退款提醒"
+      keywords: ["退款", "退钱", "退货"]
+      channels: ["wecom"]
+      priority: "HIGH"
+      cooldown: 60
+      enabled: true
+      
+    # 规则3: 订单类消息 -> 桌面通知
+    - name: "订单通知"
+      keywords: ["订单", "下单", "购买"]
+      channels: ["desktop"]
+      priority: "NORMAL"
+      cooldown: 0
+      enabled: true
+      
+    # 规则4: 付款类消息 -> 所有渠道
+    - name: "付款提醒"
+      keywords: ["付款", "支付", "转账"]
+      channels: ["console", "file", "desktop"]
+      priority: "HIGH"
+      cooldown: 30
+      enabled: true
+  
+  # 渠道配置
+  channels:
+    # 钉钉机器人
+    dingtalk:
+      enabled: false  # 需要配置后启用
+      webhook_url: "https://oapi.dingtalk.com/robot/send?access_token=YOUR_TOKEN"
+      secret: ""  # 加签密钥（可选）
+      at_mobiles: []  # @的手机号列表
+      
+    # 企业微信机器人
+    wecom:
+      enabled: false  # 需要配置后启用
+      webhook_url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY"
+      
+    # 邮件通知
+    email:
+      enabled: false  # 需要配置后启用
+      smtp_server: "smtp.qq.com"
+      smtp_port: 587
+      username: "your_email@qq.com"
+      password: "your_auth_code"
+      to_addresses: ["admin@company.com"]
+      
+    # 桌面通知
+    desktop:
+      enabled: true
+      duration: 5  # 显示时长（秒）
+      
+    # 文件日志
+    file:
+      enabled: true
+      path: "./notifications.log"
+      
+    # 控制台
+    console:
+      enabled: true
+
+# ==================== WebSocket配置 (Phase 3) ====================
+websocket:
+  enabled: true
+  cors_allowed_origins: "*"
+  async_mode: "threading"

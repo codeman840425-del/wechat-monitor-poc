@@ -1,0 +1,27 @@
+# 阶段2依赖
+# 安装命令: pip install -r requirements.txt
+
+# 阶段1的依赖
+uiautomation>=2.0.15
+Pillow>=9.0.0
+pytesseract>=0.3.10
+
+# 阶段2新增依赖
+PyYAML>=6.0           # YAML配置文件解析
+schedule>=1.2.0       # 定时任务调度
+
+# Web管理界面依赖（阶段3）
+Flask>=2.3.0          # Web框架
+tabulate>=0.9.0       # 表格输出
+openpyxl>=3.1.0       # Excel导出
+
+# 阶段3 - 实时通知系统
+pywin32>=306          # Win32 API访问（后台截图）
+aiohttp>=3.8.0        # 异步HTTP客户端（钉钉/企业微信）
+aiosmtplib>=3.0.0     # 异步SMTP（邮件通知）
+flask-socketio>=5.3.0 # WebSocket实时推送
+python-socketio>=5.8.0
+win10toast>=0.9       # Windows桌面通知（可选）
+
+# 阶段4 - 性能优化
+psutil>=5.9.0         # 系统性能监控

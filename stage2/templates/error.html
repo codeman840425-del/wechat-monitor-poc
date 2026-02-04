@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ code }} 错误 - 微信监控管理后台{% endblock %}
+{% block page_title %}错误</page_title>{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center"
+003e
+    <div class="col-md-6 text-center py-5"
+003e
+        <div class="mb-4">
+            <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 5rem;"></i>
+        </div>
+        
+        <h1 class="display-1 fw-bold text-muted">{{ code }}</h1>
+        <h3 class="mb-4">{{ message }}</h3>
+        
+        <p class="text-muted mb-4"
+003e
+            {% if code == 404 %}
+                您访问的页面不存在或已被移除。
+            {% elif code == 500 %}
+                服务器遇到了意外错误，请稍后重试。
+            {% else %}
+                发生了一个错误，请返回重试。
+            {% endif %}
+        </p>
+        
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-house"></i> 返回首页
+        </a>
+    </div>
+</div>
+{% endblock %}

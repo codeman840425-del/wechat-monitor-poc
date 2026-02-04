@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}关键字管理 - 微信监控管理后台{% endblock %}
+{% block page_title %}关键字配置管理{% endblock %}
+
+{% block content %}
+<!-- 添加关键字表单 -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-plus-circle"></i> 添加新关键字</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('add_keyword') }}" class="row g-3">
+            <div class="col-md-8">
+                <input type="text" 
+                       name="word" 
+                       class="form-control form-control-lg" 
+                       placeholder="输入要监控的关键字，如：退款、投诉..."
+                       required
+                       maxlength="50">
+                <div class="form-text">
+                    <i class="bi bi-info-circle"></i> 
+                    添加后监控服务会自动识别包含此关键字的消息
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-plus-lg"></i> 添加关键字
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 关键字列表 -->
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-tags"></i> 
+            关键字列表 
+            <span class="badge bg-secondary">{{ keywords|length }} 个</span>
+        </h5>
+        <div class="text-muted small">
+            <i class="bi bi-info-circle"></i> 
+            监控服务会实时匹配这些关键字
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        {% if keywords %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th>关键字</th>
+                        <th style="width: 120px;">状态</th>
+                        <th style="width: 180px;">创建时间</th>
+                        <th style="width: 200px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for kw in keywords %}
+                    <tr>
+                        <td>{{ kw.id }}</td>
+                        <td>
+                            <span class="fs-5">
+                                <span class="keyword-tag {% if kw.enabled %}keyword-matched{% else %}keyword-unmatched{% endif %}">
+                                    {{ kw.word }}
+                                </span>
+                            </span>
+                        </td>
+                        <td>
+                            {% if kw.enabled %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> 已启用</span>
+                            {% else %}
+                            <span class="badge bg-secondary"><i class="bi bi-pause-circle"></i> 已禁用</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ kw.created_at|datetime_format('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <form method="POST" 
+                                  action="{{ url_for('toggle_keyword_route', keyword_id=kw.id) }}" 
+                                  style="display: inline;">
+                                <button type="submit" 
+                                        class="btn btn-sm {% if kw.enabled %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+                                    {% if kw.enabled %}
+                                        <i class="bi bi-pause"></i> 禁用
+                                    {% else %}
+                                        <i class="bi bi-play"></i> 启用
+                                    {% endif %}
+                                </button>
+                            </form>
+
+                            <form method="POST" 
+                                  action="{{ url_for('delete_keyword_route', keyword_id=kw.id) }}" 
+                                  style="display: inline;"
+                                  onsubmit="return confirm('确定要删除关键字 "{{ kw.word }}" 吗？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i> 删除
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-3">暂无关键字</p>
+            <p class="small">请在上方添加要监控的关键字</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 使用说明 -->
+<div class="card mt-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-question-circle"></i> 使用说明</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6><i class="bi bi-1-circle"></i> 添加关键字</h6>
+                <p class="text-muted small">
+                    在上方输入框中输入要监控的关键字，点击"添加关键字"按钮。
+                    建议添加与业务相关的关键词，如：退款、投诉、订单等。
+                </p>
+            </div>
+            <div class="col-md-4">
+                <h6><i class="bi bi-2-circle"></i> 启用/禁用</h6>
+                <p class="text-muted small">
+                    可以临时禁用某个关键字而不删除它。禁用的关键字不会被匹配，
+                    但可以随时重新启用。
+                </p>
+            </div>
+            <div class="col-md-4">
+                <h6><i class="bi bi-3-circle"></i> 自动生效</h6>
+                <p class="text-muted small">
+                    关键字修改后会自动生效，无需重启监控服务。
+                    监控程序会定期从数据库读取最新的关键字列表。
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

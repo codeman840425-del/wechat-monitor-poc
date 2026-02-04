@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}消息查询 - 微信监控管理后台{% endblock %}
+{% block page_title %}历史消息查询{% endblock %}
+
+{% block content %}
+<!-- 筛选表单 -->
+<div class="card mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-funnel"></i> 筛选条件</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('messages') }}" class="row g-3">
+            <!-- 关键字筛选 -->
+            <div class="col-md-3">
+                <label class="form-label">关键字</label>
+                <select name="keyword" class="form-select">
+                    <option value="">全部关键字</option>
+                    {% for kw in all_keywords %}
+                    <option value="{{ kw.keyword }}" {% if keyword == kw.keyword %}selected{% endif %}>
+                        {{ kw.keyword }} ({{ kw.count }}条)
+                    </option>
+                    {% endfor %}
+                    <option value="(未匹配)" {% if keyword == '(未匹配)' %}selected{% endif %}>
+                        未匹配
+                    </option>
+                </select>
+            </div>
+
+            <!-- 开始日期 -->
+            <div class="col-md-3">
+                <label class="form-label">开始日期</label>
+                <input type="date" name="from" class="form-control" value="{{ from_date }}">
+            </div>
+
+            <!-- 结束日期 -->
+            <div class="col-md-3">
+                <label class="form-label">结束日期</label>
+                <input type="date" name="to" class="form-control" value="{{ to_date }}">
+            </div>
+
+            <!-- 每页条数 -->
+            <div class="col-md-2">
+                <label class="form-label">每页显示</label>
+                <select name="page_size" class="form-select">
+                    <option value="20" {% if page_size == 20 %}selected{% endif %}>20 条</option>
+                    <option value="50" {% if page_size == 50 %}selected{% endif %}>50 条</option>
+                    <option value="100" {% if page_size == 100 %}selected{% endif %}>100 条</option>
+                </select>
+            </div>
+
+            <!-- 按钮 -->
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> 查询
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 消息列表 -->
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-list"></i> 
+            消息列表 
+            <span class="badge bg-secondary">{{ total }} 条</span>
+        </h5>
+        <div>
+            <span class="text-muted">第 {{ page }} / {{ total_pages }} 页</span>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        {% if messages %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th style="width: 150px;">时间</th>
+                        <th style="width: 150px;">会话名</th>
+                        <th>消息内容</th>
+                        <th style="width: 100px;">关键字</th>
+                        <th style="width: 150px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for msg in messages %}
+                    <tr>
+                        <td>{{ msg.id }}</td>
+                        <td>{{ msg.created_at|datetime_format('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ msg.window_title|truncate(12) }}</td>
+                        <td>{{ msg.message_text|truncate(50) }}</td>
+                        <td>
+                            {% if msg.matched_keyword == '(未匹配)' %}
+                            <span class="keyword-tag keyword-unmatched">未匹配</span>
+                            {% else %}
+                            <span class="keyword-tag keyword-matched">{{ msg.matched_keyword }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('message_detail', message_id=msg.id) }}" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-eye"></i> 详情
+                            </a>
+                            {% if msg.screenshot_path %}
+                            <a href="{{ url_for('serve_image', filename=msg.screenshot_path) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-image"></i> 截图
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 分页 -->
+        {% if total_pages > 1 %}
+        <nav class="p-3">
+            <ul class="pagination">
+                <!-- 上一页 -->
+                <li class="page-item {% if not has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('messages', page=page-1, keyword=keyword or '', from=from_date, to=to_date, page_size=page_size) if has_prev else '#' }}">
+                        <i class="bi bi-chevron-left"></i> 上一页
+                    </a>
+                </li>
+
+                <!-- 页码 -->
+                {% set start_page = [page - 2, 1]|max %}
+                {% set end_page = [start_page + 4, total_pages]|min %}
+                {% set start_page = [end_page - 4, 1]|max %}
+
+                {% if start_page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('messages', page=1, keyword=keyword or '', from=from_date, to=to_date, page_size=page_size) }}">1</a>
+                </li>
+                {% if start_page > 2 %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endif %}
+
+                {% for p in range(start_page, end_page + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('messages', page=p, keyword=keyword or '', from=from_date, to=to_date, page_size=page_size) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+
+                {% if end_page < total_pages %}
+                {% if end_page < total_pages - 1 %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('messages', page=total_pages, keyword=keyword or '', from=from_date, to=to_date, page_size=page_size) }}">{{ total_pages }}</a>
+                </li>
+                {% endif %}
+
+                <!-- 下一页 -->
+                <li class="page-item {% if not has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('messages', page=page+1, keyword=keyword or '', from=from_date, to=to_date, page_size=page_size) if has_next else '#' }}">
+                        下一页 <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-3">没有找到符合条件的消息</p>
+            <a href="{{ url_for('messages') }}" class="btn btn-outline-primary mt-2">
+                <i class="bi bi-arrow-counterclockwise"></i> 重置筛选
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
